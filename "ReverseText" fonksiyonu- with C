@@ -1,0 +1,27 @@
+#include <stdio.h>
+#include <string.h>
+
+
+# ReverseText fonksiyonu, verilen metni tersine çevirir ve sonucu ekrana yazdırır.
+
+void ReverseText(char* text) {
+    int length = strlen(text);
+    int i;
+    
+    for (i = length - 1; i >= 0; i--) {
+        printf("%c", text[i]);
+    }
+    printf("\n");
+}
+
+int main() {
+    char text[100];
+    
+    printf("Metni girin: ");
+    fgets(text, sizeof(text), stdin);
+    
+    printf("Tersine cevrilmis metin: ");
+    ReverseText(text);
+    
+    return 0;
+}
