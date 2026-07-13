@@ -1,0 +1,157 @@
+name: B1 Evidence Repair Audit
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened]
+    paths:
+      - "b1_ci/**"
+      - "a5_ci/**"
+      - ".github/workflows/b1-evidence-repair.yml"
+  push:
+    branches: [b1-evidence-repair-20260713]
+    paths:
+      - "b1_ci/**"
+      - "a5_ci/**"
+      - ".github/workflows/b1-evidence-repair.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  evidence-repair:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 150
+
+    steps:
+      - name: Checkout evidence-repair branch
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: |
+            a5_ci/requirements.txt
+            b1_ci/requirements.txt
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r a5_ci/requirements.txt
+          python -m pip install -r b1_ci/requirements.txt
+
+      - name: Build isolated workspace
+        run: |
+          rm -rf b1_workspace
+          mkdir -p b1_workspace/{incoming,derived,logs,b1_derived}
+          cp -R a5_ci/config b1_workspace/config
+          cp -R a5_ci/scripts b1_workspace/scripts
+          cp b1_ci/scripts/b1_evidence_repair.py b1_workspace/scripts/b1_evidence_repair.py
+
+      - name: Re-acquire and verify A5 raw assets
+        run: |
+          set -o pipefail
+          python b1_workspace/scripts/run_a5_v2_cross_platform.py \
+            --root b1_workspace \
+            2>&1 | tee b1_workspace/logs/a5_reacquisition.log
+
+      - name: Execute B1 source, LOS and claim repair
+        run: |
+          set -o pipefail
+          python b1_workspace/scripts/b1_evidence_repair.py \
+            --root b1_workspace \
+            2>&1 | tee b1_workspace/logs/b1_execution.log
+
+      - name: Freeze CI provenance
+        if: always()
+        run: |
+          python - <<'PY'
+          import hashlib, json, os
+          from datetime import datetime, timezone
+          from pathlib import Path
+
+          root = Path("b1_workspace")
+          def sha256(path):
+              h = hashlib.sha256()
+              with path.open("rb") as f:
+                  for block in iter(lambda: f.read(1024 * 1024), b""):
+                      h.update(block)
+              return h.hexdigest()
+
+          files = {}
+          for base_name in ("derived", "b1_derived", "logs"):
+              base = root / base_name
+              if not base.exists():
+                  continue
+              for path in sorted(base.rglob("*")):
+                  if path.is_file() and path.stat().st_size > 0:
+                      files[str(path.relative_to(root))] = {
+                          "size_bytes": path.stat().st_size,
+                          "sha256": sha256(path),
+                      }
+
+          gate_path = root / "b1_derived/B1_GATE_RESULT.json"
+          gate = json.loads(gate_path.read_text()) if gate_path.is_file() else None
+          summary = {
+              "generated_at_utc": datetime.now(timezone.utc).isoformat(),
+              "repository": os.getenv("GITHUB_REPOSITORY"),
+              "event_name": os.getenv("GITHUB_EVENT_NAME"),
+              "ref": os.getenv("GITHUB_REF"),
+              "sha": os.getenv("GITHUB_SHA"),
+              "run_id": os.getenv("GITHUB_RUN_ID"),
+              "run_attempt": os.getenv("GITHUB_RUN_ATTEMPT"),
+              "gate_present": gate is not None,
+              "repeat_0o_b_authorization": bool(gate and gate.get("repeat_0o_b_authorization") is True),
+              "baseline_implementation_authorization": False,
+              "files": files,
+          }
+          (root / "B1_CI_EXECUTION_SUMMARY.json").write_text(json.dumps(summary, indent=2))
+          print(json.dumps(summary, indent=2))
+          PY
+
+      - name: Build compact B1 evidence artifact
+        if: always()
+        run: |
+          cd b1_workspace
+          zip -r -9 ../B1_EVIDENCE_REPAIR_BUNDLE.zip \
+            derived \
+            b1_derived \
+            logs \
+            B1_CI_EXECUTION_SUMMARY.json
+          cd ..
+          sha256sum B1_EVIDENCE_REPAIR_BUNDLE.zip | tee B1_EVIDENCE_REPAIR_BUNDLE.zip.sha256
+
+      - name: Upload B1 evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: B1_EVIDENCE_REPAIR_BUNDLE
+          path: |
+            B1_EVIDENCE_REPAIR_BUNDLE.zip
+            B1_EVIDENCE_REPAIR_BUNDLE.zip.sha256
+          retention-days: 14
+          compression-level: 0
+          if-no-files-found: error
+
+      - name: Enforce no-premature-implementation boundary
+        if: always()
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          gate_path = Path("b1_workspace/b1_derived/B1_GATE_RESULT.json")
+          if not gate_path.is_file():
+              raise SystemExit("B1 FAIL: gate result missing")
+          gate = json.loads(gate_path.read_text())
+          for field in (
+              "baseline_implementation_authorization",
+              "replication_authorization",
+              "manuscript_rewrite_authorization",
+          ):
+              if gate.get(field) is not False:
+                  raise SystemExit(f"Boundary violation: {field} must remain false")
+          print("B1 audit executed; implementation remains prohibited.")
+          PY
