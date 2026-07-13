@@ -49,7 +49,8 @@ jobs:
           mkdir -p b1_workspace/{incoming,derived,logs,b1_derived}
           cp -R a5_ci/config b1_workspace/config
           cp -R a5_ci/scripts b1_workspace/scripts
-          cp b1_ci/scripts/b1_evidence_repair.py b1_workspace/scripts/b1_evidence_repair.py
+          cp b1_ci/scripts/source_repair.py b1_workspace/scripts/source_repair.py
+          cp b1_ci/scripts/los_claim.py b1_workspace/scripts/los_claim.py
 
       - name: Re-acquire and verify A5 raw assets
         run: |
@@ -58,12 +59,19 @@ jobs:
             --root b1_workspace \
             2>&1 | tee b1_workspace/logs/a5_reacquisition.log
 
-      - name: Execute B1 source, LOS and claim repair
+      - name: Execute B1 source repair
         run: |
           set -o pipefail
-          python b1_workspace/scripts/b1_evidence_repair.py \
+          python b1_workspace/scripts/source_repair.py \
             --root b1_workspace \
-            2>&1 | tee b1_workspace/logs/b1_execution.log
+            2>&1 | tee b1_workspace/logs/source_repair.log
+
+      - name: Execute terrain LOS and traffic-claim repair
+        run: |
+          set -o pipefail
+          python b1_workspace/scripts/los_claim.py \
+            --root b1_workspace \
+            2>&1 | tee b1_workspace/logs/los_claim.log
 
       - name: Freeze CI provenance
         if: always()
