@@ -1,0 +1,7 @@
+requests>=2.32.0
+pypdf>=5.0.0
+numpy>=2.0.0
+pandas>=2.2.0
+shapely>=2.0.0
+pyproj>=3.6.0
+osmium>=4.0.2
