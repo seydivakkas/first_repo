@@ -1,0 +1,120 @@
+{
+  "highland_rule_pdf": {
+    "filename": "highland_150m_intervisible_rule.pdf",
+    "required": true,
+    "role": "direct_passing_place_engineering_rule",
+    "urls": [
+      "https://www.highland.gov.uk/download/meetings/id/80148/item_101_-_michael_cameron_ppa-270-2262_2103970ful"
+    ],
+    "validation": "pdf"
+  },
+  "friesen_pdf": {
+    "filename": "friesen_2308.00420.pdf",
+    "required": true,
+    "role": "general_placement_endogenous_railway_source",
+    "urls": [
+      "https://arxiv.org/pdf/2308.00420",
+      "https://export.arxiv.org/pdf/2308.00420"
+    ],
+    "validation": "pdf",
+    "bibliographic_identity": {
+      "title": "The complexity of the Timetable-Based Railway Network Design Problem",
+      "authors": [
+        "Nadine Friesen",
+        "Tim Sander",
+        "Karl Nachtigall",
+        "Nils Nießen"
+      ],
+      "arxiv_id": "2308.00420v1",
+      "doi": "10.48550/arXiv.2308.00420"
+    }
+  },
+  "friesen_source": {
+    "filename": "friesen_2308.00420_source.tar",
+    "required": true,
+    "role": "primary_source_archive",
+    "urls": [
+      "https://export.arxiv.org/e-print/2308.00420",
+      "https://arxiv.org/e-print/2308.00420"
+    ],
+    "validation": "tar"
+  },
+  "scotland_pbf": {
+    "filename": "scotland-260711.osm.pbf",
+    "required": true,
+    "role": "immutable_osm_snapshot",
+    "urls": [
+      "https://download.geofabrik.de/europe/united-kingdom/scotland-260711.osm.pbf"
+    ],
+    "expected_size_bytes": 322265199,
+    "osm_data_cutoff_utc": "2026-07-11T20:21:30Z",
+    "validation": "pbf_with_md5"
+  },
+  "scotland_md5": {
+    "filename": "scotland-260711.osm.pbf.md5",
+    "required": true,
+    "role": "publisher_checksum",
+    "urls": [
+      "https://download.geofabrik.de/europe/united-kingdom/scotland-260711.osm.pbf.md5"
+    ],
+    "validation": "md5_text"
+  },
+  "dft_count_points": {
+    "filename": "count_points.zip",
+    "required": true,
+    "role": "official_traffic_count_metadata",
+    "urls": [
+      "https://storage.googleapis.com/dft-statistics/road-traffic/downloads/data-gov-uk/count_points.zip"
+    ],
+    "validation": "zip_csv"
+  },
+  "dft_raw_counts": {
+    "filename": "dft_traffic_counts_raw_counts.zip",
+    "required": true,
+    "role": "official_raw_traffic_counts",
+    "urls": [
+      "https://storage.googleapis.com/dft-statistics/road-traffic/downloads/data-gov-uk/dft_traffic_counts_raw_counts.zip"
+    ],
+    "validation": "zip_csv"
+  },
+  "dft_aadf": {
+    "filename": "dft_traffic_counts_aadf.zip",
+    "required": true,
+    "role": "official_aadf",
+    "urls": [
+      "https://storage.googleapis.com/dft-statistics/road-traffic/downloads/data-gov-uk/dft_traffic_counts_aadf.zip"
+    ],
+    "validation": "zip_csv"
+  },
+  "dft_aadf_direction": {
+    "filename": "dft_traffic_counts_aadf_by_direction.zip",
+    "required": false,
+    "role": "official_directional_aadf",
+    "urls": [
+      "https://storage.googleapis.com/dft-statistics/road-traffic/downloads/data-gov-uk/dft_traffic_counts_aadf_by_direction.zip"
+    ],
+    "validation": "zip_csv"
+  },
+  "dft_major_roads_2025": {
+    "filename": "mrdb-2025.zip",
+    "required": false,
+    "role": "official_major_road_geometry_support",
+    "urls": [
+      "https://storage.googleapis.com/dft-statistics/road-traffic/mrdb-2025.zip"
+    ],
+    "validation": "zip"
+  },
+  "srtm_dem": {
+    "filename": "N58W004.hgt.gz",
+    "required": true,
+    "role": "reproducible_dem_visibility_input",
+    "urls": [
+      "https://s3.amazonaws.com/elevation-tiles-prod/skadi/N58/N58W004.hgt.gz"
+    ],
+    "validation": "hgt_gzip",
+    "accepted_uncompressed_sizes": [
+      2884802,
+      25934402
+    ]
+  }
+}
