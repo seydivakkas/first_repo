@@ -105,8 +105,8 @@ def gate(x):return x['roc_auc']>=.8 and x['fnr']<=.2 and x['fpr']<=.2 and x['p95
 
 def main():
     for p in [W,O,D,DL]:p.mkdir(parents=True,exist_ok=True)
-    itd=acquire_itd();mv=acquire_mvtec();ir=Path(itd['root']);er=Path(mv['root']);it=imgs(ir/'train'/'good');et=imgs(er/'train'/'good');sf,sc=it[:180],it[180:208];ef,ec=et[:180],et[180:208]
-    if min(len(sf),len(sc),len(ef),len(ec))<28:raise RuntimeError(f'insufficient normal split: {len(sf),len(sc),len(ef),len(ec)}')
+    itd=acquire_itd();mv=acquire_mvtec();ir=Path(itd['root']);er=Path(mv['root']);it=imgs(ir/'train'/'good');et=imgs(er/'train'/'good');sf,sc=it[:180],it[180:208];external_cal=max(8,min(28,len(et)//5));ef,ec=et[:-external_cal],et[-external_cal:]
+    if len(sf)<180 or len(sc)<28 or len(ef)<20 or len(ec)<8:raise RuntimeError(f'insufficient normal split: {len(sf),len(sc),len(ef),len(ec)}')
     specs=[('M0_raw_source_frozen','raw',False),('M1_robust_appearance_source_frozen','robust',False),('M2_self_similarity_source_frozen','self',False),('M3_pattern_conditioned_raw','raw',True)]
     results={};rows=[]
     for name,mode,conditioned in specs:
