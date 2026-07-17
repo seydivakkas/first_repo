@@ -54,11 +54,9 @@ def robust(a):
 def lbp(g):
     c=g[1:-1,1:-1];ns=[g[:-2,:-2],g[:-2,1:-1],g[:-2,2:],g[1:-1,2:],g[2:,2:],g[2:,1:-1],g[2:,:-2],g[1:-1,:-2]];bits=np.stack([(n>=c).astype(np.uint8) for n in ns]);tr=np.sum(bits!=np.roll(bits,1,0),0);code=np.where(tr<=2,bits.sum(0),9);return hist(code,10,0,10)
 def offsets(g):
-    vals=[];c=g-g.mean();v=np.mean(c*c)+1e-6
+    vals=[];c=g-g.mean();v=np.mean(c*c)+1e-6;h,w=g.shape
     for dy,dx in [(0,1),(1,0),(0,2),(2,0),(1,1),(1,-1)]:
-        if dx>0:a=g[dy:, :-dx];b=g[:-dy or None,dx:];ca=c[dy:,:-dx];cb=c[:-dy or None,dx:]
-        else:a=g[dy:,-dx:];b=g[:-dy or None,:dx];ca=c[dy:,-dx:];cb=c[:-dy or None,:dx]
-        vals += [float(np.mean(abs(a-b))),float(np.mean(ca*cb)/v)]
+        y1=max(0,dy);y2=h+min(0,dy);x1=max(0,dx);x2=w+min(0,dx);a=g[y1:y2,x1:x2];b=g[y1-dy:y2-dy,x1-dx:x2-dx];ca=c[y1:y2,x1:x2];cb=c[y1-dy:y2-dy,x1-dx:x2-dx];vals += [float(np.mean(abs(a-b))),float(np.mean(ca*cb)/v)]
     return np.array(vals,np.float32)
 def freq(g):
     s=abs(np.fft.rfft2(g-g.mean()))**2;yy=np.fft.fftfreq(g.shape[0])[:,None];xx=np.fft.rfftfreq(g.shape[1])[None,:];r=np.sqrt(xx*xx+yy*yy);t=max(float(s.sum()),1e-6);return np.array([s[(r>=a)&(r<b)].sum()/t for a,b in [(0,.12),(.12,.25),(.25,.5),(.5,.75)]],np.float32)
