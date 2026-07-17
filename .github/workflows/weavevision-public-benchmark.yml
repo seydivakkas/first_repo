@@ -30,12 +30,12 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           python -m pip install numpy pillow requests remotezip scikit-learn huggingface_hub hf_transfer
-      - name: Run IndustrialTextileDataset and RAW-FABRID benchmark
+      - name: Run IndustrialTextileDataset and external carpet benchmark
         shell: bash
         run: |
           mkdir -p weavevision_ci/outputs
           set +e
-          python weavevision_ci/run_benchmark.py 2>&1 | tee weavevision_ci/outputs/run.log
+          python weavevision_ci/run_benchmark_v2.py 2>&1 | tee weavevision_ci/outputs/run.log
           code=${PIPESTATUS[0]}
           echo "$code" > weavevision_ci/outputs/exit_code.txt
           exit "$code"
@@ -44,7 +44,6 @@ jobs:
         run: |
           test -f weavevision_ci/outputs/BENCHMARK_SUMMARY.md && cat weavevision_ci/outputs/BENCHMARK_SUMMARY.md || true
           test -f weavevision_ci/outputs/run.log && tail -n 160 weavevision_ci/outputs/run.log || true
-          test -f weavevision_ci/outputs/mendeley_resolution_diagnostics.json && cat weavevision_ci/outputs/mendeley_resolution_diagnostics.json || true
           df -h
       - name: Upload verified benchmark artifact
         if: always()
