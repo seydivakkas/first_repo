@@ -11,7 +11,7 @@ permissions:
 jobs:
   download-model:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -24,7 +24,7 @@ jobs:
           python - <<'PY'
           from huggingface_hub import snapshot_download
           snapshot_download(
-              repo_id='Helsinki-NLP/opus-tatoeba-en-tr',
+              repo_id='Helsinki-NLP/opus-mt-tc-big-en-tr',
               local_dir='model',
               allow_patterns=[
                   'config.json',
@@ -35,18 +35,17 @@ jobs:
                   'vocab.json',
                   'tokenizer_config.json',
                   'special_tokens_map.json',
-                  'metadata.json',
               ],
           )
           PY
-          tar -czf opus-tatoeba-en-tr.tar.gz model
-          sha256sum opus-tatoeba-en-tr.tar.gz > opus-tatoeba-en-tr.tar.gz.sha256
+          tar -czf opus-mt-tc-big-en-tr.tar.gz model
+          sha256sum opus-mt-tc-big-en-tr.tar.gz > opus-mt-tc-big-en-tr.tar.gz.sha256
       - name: Upload model artifact
         uses: actions/upload-artifact@v4
         with:
-          name: opus-tatoeba-en-tr
+          name: opus-mt-tc-big-en-tr
           path: |
-            opus-tatoeba-en-tr.tar.gz
-            opus-tatoeba-en-tr.tar.gz.sha256
+            opus-mt-tc-big-en-tr.tar.gz
+            opus-mt-tc-big-en-tr.tar.gz.sha256
           retention-days: 1
           compression-level: 0
