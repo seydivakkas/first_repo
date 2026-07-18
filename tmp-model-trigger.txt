@@ -1,0 +1,1 @@
+Temporary trigger for downloading the public Helsinki-NLP English–Turkish translation model as a short-lived GitHub Actions artifact.
