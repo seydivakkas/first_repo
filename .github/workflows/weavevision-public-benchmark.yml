@@ -34,7 +34,7 @@ jobs:
         run: |
           mkdir -p weavevision_ci/outputs_v12
           set +e
-          python weavevision_ci/run_metal_observability_v12.py 2>&1 | tee weavevision_ci/outputs_v12/run.log
+          python weavevision_ci/run_metal_observability_v12_wrapper.py 2>&1 | tee weavevision_ci/outputs_v12/run.log
           code=${PIPESTATUS[0]}
           echo "$code" > weavevision_ci/outputs_v12/exit_code.txt
           exit "$code"
