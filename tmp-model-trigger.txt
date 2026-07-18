@@ -1,2 +1,3 @@
 Temporary trigger for downloading the public Helsinki-NLP English–Turkish translation model as a short-lived GitHub Actions artifact.
 Retry with the validated opus-tatoeba-en-tr repository.
+Request the higher-capacity technical translation candidate.
