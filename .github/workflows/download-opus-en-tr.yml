@@ -1,14 +1,12 @@
 name: Download English-Turkish MT Model
 
 on:
-  push:
+  pull_request:
     branches:
       - main
-    paths:
-      - .github/workflows/download-opus-en-tr.yml
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   download-model:
@@ -41,14 +39,3 @@ jobs:
             opus-mt-en-tr.tar.gz.sha256
           retention-days: 1
           compression-level: 0
-      - name: Publish run metadata
-        env:
-          RUN_ID: ${{ github.run_id }}
-          RUN_ATTEMPT: ${{ github.run_attempt }}
-        run: |
-          printf '{"run_id":%s,"run_attempt":%s,"artifact_name":"opus-mt-en-tr","source_commit":"%s"}\n' "$RUN_ID" "$RUN_ATTEMPT" "$GITHUB_SHA" > model-download-run.json
-          git config user.name github-actions[bot]
-          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add model-download-run.json
-          git commit -m 'chore: publish model download run metadata [skip ci]'
-          git push
