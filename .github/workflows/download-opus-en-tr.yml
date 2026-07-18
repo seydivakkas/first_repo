@@ -24,18 +24,29 @@ jobs:
           python - <<'PY'
           from huggingface_hub import snapshot_download
           snapshot_download(
-              repo_id='Helsinki-NLP/opus-mt-en-tr',
+              repo_id='Helsinki-NLP/opus-tatoeba-en-tr',
               local_dir='model',
+              allow_patterns=[
+                  'config.json',
+                  'generation_config.json',
+                  'pytorch_model.bin',
+                  'source.spm',
+                  'target.spm',
+                  'vocab.json',
+                  'tokenizer_config.json',
+                  'special_tokens_map.json',
+                  'metadata.json',
+              ],
           )
           PY
-          tar -czf opus-mt-en-tr.tar.gz model
-          sha256sum opus-mt-en-tr.tar.gz > opus-mt-en-tr.tar.gz.sha256
+          tar -czf opus-tatoeba-en-tr.tar.gz model
+          sha256sum opus-tatoeba-en-tr.tar.gz > opus-tatoeba-en-tr.tar.gz.sha256
       - name: Upload model artifact
         uses: actions/upload-artifact@v4
         with:
-          name: opus-mt-en-tr
+          name: opus-tatoeba-en-tr
           path: |
-            opus-mt-en-tr.tar.gz
-            opus-mt-en-tr.tar.gz.sha256
+            opus-tatoeba-en-tr.tar.gz
+            opus-tatoeba-en-tr.tar.gz.sha256
           retention-days: 1
           compression-level: 0
