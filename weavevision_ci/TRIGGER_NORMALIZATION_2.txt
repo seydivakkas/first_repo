@@ -1,0 +1,1 @@
+WeaveVision normalization rerun: limited MVTec reference pool accepted and recorded.
