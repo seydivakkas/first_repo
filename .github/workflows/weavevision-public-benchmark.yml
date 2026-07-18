@@ -1,4 +1,4 @@
-name: WeaveVision Phase-Equivariant Residual Experiment
+name: WeaveVision R1 Error Anatomy and Selective Risk
 
 on:
   pull_request:
@@ -12,7 +12,7 @@ permissions:
   contents: read
 
 jobs:
-  phase-residual:
+  r1-selective-risk:
     runs-on: ubuntu-latest
     timeout-minutes: 240
     env:
@@ -29,26 +29,26 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           python -m pip install numpy pillow scikit-learn huggingface_hub hf_transfer
-      - name: Run R0 R1 R2 and domain guard-band experiment
+      - name: Run frozen R1 error decomposition and selective risk
         shell: bash
         run: |
-          mkdir -p weavevision_ci/outputs_v09
+          mkdir -p weavevision_ci/outputs_v10
           set +e
-          python weavevision_ci/run_phase_residual_v09.py 2>&1 | tee weavevision_ci/outputs_v09/run.log
+          python weavevision_ci/run_r1_error_selective_v10.py 2>&1 | tee weavevision_ci/outputs_v10/run.log
           code=${PIPESTATUS[0]}
-          echo "$code" > weavevision_ci/outputs_v09/exit_code.txt
+          echo "$code" > weavevision_ci/outputs_v10/exit_code.txt
           exit "$code"
       - name: Show experiment summary
         if: always()
         run: |
-          test -f weavevision_ci/outputs_v09/PHASE_RESIDUAL_SUMMARY.md && cat weavevision_ci/outputs_v09/PHASE_RESIDUAL_SUMMARY.md || true
-          test -f weavevision_ci/outputs_v09/run.log && tail -n 220 weavevision_ci/outputs_v09/run.log || true
+          test -f weavevision_ci/outputs_v10/R1_ERROR_SELECTIVE_SUMMARY.md && cat weavevision_ci/outputs_v10/R1_ERROR_SELECTIVE_SUMMARY.md || true
+          test -f weavevision_ci/outputs_v10/run.log && tail -n 240 weavevision_ci/outputs_v10/run.log || true
           df -h
       - name: Upload experiment artifact
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: weavevision-v0.9.0a1-phase-residual
-          path: weavevision_ci/outputs_v09/
+          name: weavevision-v0.10.0a1-r1-error-selective
+          path: weavevision_ci/outputs_v10/
           if-no-files-found: warn
           retention-days: 30
