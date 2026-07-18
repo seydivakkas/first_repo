@@ -1,4 +1,4 @@
-name: WeaveVision Domain Compatibility and Residual Experiment
+name: WeaveVision Phase-Equivariant Residual Experiment
 
 on:
   pull_request:
@@ -12,7 +12,7 @@ permissions:
   contents: read
 
 jobs:
-  decomposition:
+  phase-residual:
     runs-on: ubuntu-latest
     timeout-minutes: 240
     env:
@@ -29,26 +29,26 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           python -m pip install numpy pillow scikit-learn huggingface_hub hf_transfer
-      - name: Run domain compatibility and residual anomaly experiment
+      - name: Run R0 R1 R2 and domain guard-band experiment
         shell: bash
         run: |
-          mkdir -p weavevision_ci/outputs_v08
+          mkdir -p weavevision_ci/outputs_v09
           set +e
-          python weavevision_ci/run_domain_residual_v08.py 2>&1 | tee weavevision_ci/outputs_v08/run.log
+          python weavevision_ci/run_phase_residual_v09.py 2>&1 | tee weavevision_ci/outputs_v09/run.log
           code=${PIPESTATUS[0]}
-          echo "$code" > weavevision_ci/outputs_v08/exit_code.txt
+          echo "$code" > weavevision_ci/outputs_v09/exit_code.txt
           exit "$code"
       - name: Show experiment summary
         if: always()
         run: |
-          test -f weavevision_ci/outputs_v08/DOMAIN_RESIDUAL_SUMMARY.md && cat weavevision_ci/outputs_v08/DOMAIN_RESIDUAL_SUMMARY.md || true
-          test -f weavevision_ci/outputs_v08/run.log && tail -n 200 weavevision_ci/outputs_v08/run.log || true
+          test -f weavevision_ci/outputs_v09/PHASE_RESIDUAL_SUMMARY.md && cat weavevision_ci/outputs_v09/PHASE_RESIDUAL_SUMMARY.md || true
+          test -f weavevision_ci/outputs_v09/run.log && tail -n 220 weavevision_ci/outputs_v09/run.log || true
           df -h
       - name: Upload experiment artifact
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: weavevision-v0.8.0a1-domain-residual
-          path: weavevision_ci/outputs_v08/
+          name: weavevision-v0.9.0a1-phase-residual
+          path: weavevision_ci/outputs_v09/
           if-no-files-found: warn
           retention-days: 30
