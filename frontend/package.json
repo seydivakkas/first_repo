@@ -1,0 +1,25 @@
+{
+  "name": "online-art-gallery-frontend",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "echo 'Vite unavailable in restricted environment'",
+    "build": "tsc -b && node scripts/build.mjs",
+    "preview": "echo 'Preview unavailable in restricted environment'",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^6.24.1",
+    "recharts": "^2.12.7"
+  },
+  "devDependencies": {
+    "autoprefixer": "^10.4.19",
+    "postcss": "^8.4.39",
+    "tailwindcss": "^3.4.6",
+    "typescript": "^5.5.3",
+    "vite": "^5.3.3"
+  }
+}

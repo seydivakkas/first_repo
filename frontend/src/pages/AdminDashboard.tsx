@@ -1,0 +1,3 @@
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
+const data = [{ month: 'Jan', revenue: 5000 }, { month: 'Feb', revenue: 7000 }];
+export default function AdminDashboard(){return <div className="p-6 space-y-4"><h1 className="text-2xl font-bold">Admin Dashboard</h1><div className="grid md:grid-cols-3 gap-4"><div className="border p-4 rounded">Toplam Eser: 2</div><div className="border p-4 rounded">Toplam Etkinlik: 2</div><div className="border p-4 rounded">Gelir: ₺12000</div></div><div className="h-64 border p-4"><ResponsiveContainer width="100%" height="100%"><BarChart data={data}><XAxis dataKey="month"/><YAxis/><Tooltip/><Bar dataKey="revenue" fill="#2563eb"/></BarChart></ResponsiveContainer></div></div>}

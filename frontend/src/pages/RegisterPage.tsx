@@ -1,0 +1,1 @@
+export default function RegisterPage(){return <div className="p-6 max-w-md"><h1 className="text-2xl font-bold mb-4">Kayıt</h1><input className="border p-2 mb-2 w-full" placeholder="Email"/><input className="border p-2 mb-2 w-full" placeholder="Şifre" type="password"/><button className="bg-green-600 text-white px-4 py-2 rounded">Kayıt Ol</button></div>}
