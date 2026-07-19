@@ -1,0 +1,62 @@
+name: B1-R2 Targeted Source Acquisition
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened]
+    paths:
+      - "b1_ci/scripts/r2_targeted_acquisition.py"
+      - ".github/workflows/b1-r2-targeted-acquisition.yml"
+  push:
+    branches: [b1-evidence-repair-20260713]
+    paths:
+      - "b1_ci/scripts/r2_targeted_acquisition.py"
+      - ".github/workflows/b1-r2-targeted-acquisition.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  targeted-acquisition:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install requests pypdf
+      - name: Acquire canonical Highland source and IDEALS bitstream
+        run: |
+          mkdir -p b1_r2_output
+          python b1_ci/scripts/r2_targeted_acquisition.py --output b1_r2_output | tee b1_r2_output/execution.log
+      - name: Build evidence bundle
+        if: always()
+        run: |
+          zip -r -9 B1_R2_TARGETED_ACQUISITION_BUNDLE.zip b1_r2_output
+          sha256sum B1_R2_TARGETED_ACQUISITION_BUNDLE.zip > B1_R2_TARGETED_ACQUISITION_BUNDLE.zip.sha256
+      - name: Upload evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: B1_R2_TARGETED_ACQUISITION_BUNDLE
+          path: |
+            B1_R2_TARGETED_ACQUISITION_BUNDLE.zip
+            B1_R2_TARGETED_ACQUISITION_BUNDLE.zip.sha256
+          retention-days: 14
+          compression-level: 0
+          if-no-files-found: error
+      - name: Enforce boundary
+        if: always()
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p=Path('b1_r2_output/B1_R2_TARGETED_GATE.json')
+          if not p.is_file(): raise SystemExit('B1-R2 gate missing')
+          gate=json.loads(p.read_text())
+          for key in ('baseline_implementation_authorization','replication_authorization','manuscript_rewrite_authorization'):
+              if gate.get(key) is not False: raise SystemExit(f'Boundary violation: {key}')
+          print(json.dumps(gate,indent=2))
+          PY

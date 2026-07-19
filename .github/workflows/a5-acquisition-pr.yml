@@ -1,0 +1,160 @@
+name: A5 PR Acquisition Verification
+
+on:
+  pull_request:
+    branches:
+      - main
+    types:
+      - opened
+      - synchronize
+      - reopened
+    paths:
+      - "a5_ci/**"
+      - ".github/workflows/a5-acquisition-pr.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  acquire-verify-hash:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+
+    steps:
+      - name: Checkout PR merge ref
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: a5_ci/requirements.txt
+
+      - name: Install extraction dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r a5_ci/requirements.txt
+
+      - name: Create isolated A5 workspace
+        run: |
+          rm -rf a5_workspace
+          mkdir -p a5_workspace/{incoming,derived,logs}
+          cp -R a5_ci/config a5_workspace/config
+          cp -R a5_ci/scripts a5_workspace/scripts
+          cp a5_ci/requirements.txt a5_workspace/requirements.txt
+
+      - name: Execute raw acquisition and scientific gate
+        id: acquisition
+        continue-on-error: true
+        run: |
+          set +e
+          python a5_workspace/scripts/run_a5_v2_cross_platform.py \
+            --root a5_workspace \
+            2>&1 | tee a5_workspace/logs/github_actions_execution.log
+          code=${PIPESTATUS[0]}
+          echo "$code" > a5_workspace/logs/runner_exit_code.txt
+          echo "exit_code=$code" >> "$GITHUB_OUTPUT"
+          exit "$code"
+
+      - name: Produce immutable CI execution summary
+        if: always()
+        run: |
+          python - <<'PY'
+          import hashlib
+          import json
+          import os
+          from datetime import datetime, timezone
+          from pathlib import Path
+
+          root = Path("a5_workspace")
+          derived = root / "derived"
+          logs = root / "logs"
+
+          def sha256(path: Path) -> str:
+              h = hashlib.sha256()
+              with path.open("rb") as handle:
+                  for block in iter(lambda: handle.read(1024 * 1024), b""):
+                      h.update(block)
+              return h.hexdigest()
+
+          gate_path = derived / "A5_GATE_RESULT_V2.json"
+          gate = None
+          if gate_path.is_file() and gate_path.stat().st_size > 0:
+              gate = json.loads(gate_path.read_text(encoding="utf-8"))
+
+          files = {}
+          for base in (derived, logs):
+              if not base.exists():
+                  continue
+              for path in sorted(base.rglob("*")):
+                  if path.is_file() and path.stat().st_size > 0:
+                      files[str(path.relative_to(root))] = {
+                          "size_bytes": path.stat().st_size,
+                          "sha256": sha256(path),
+                      }
+
+          summary = {
+              "generated_at_utc": datetime.now(timezone.utc).isoformat(),
+              "repository": os.environ.get("GITHUB_REPOSITORY"),
+              "event_name": os.environ.get("GITHUB_EVENT_NAME"),
+              "ref": os.environ.get("GITHUB_REF"),
+              "sha": os.environ.get("GITHUB_SHA"),
+              "run_id": os.environ.get("GITHUB_RUN_ID"),
+              "run_attempt": os.environ.get("GITHUB_RUN_ATTEMPT"),
+              "runner_exit_code": int((logs / "runner_exit_code.txt").read_text().strip()) if (logs / "runner_exit_code.txt").is_file() else None,
+              "gate_present": gate is not None,
+              "a5_pass": bool(gate and gate.get("a5_pass") is True),
+              "adim_01e_0o_b_authorization": bool(gate and gate.get("adim_01e_0o_b_authorization") is True),
+              "baseline_implementation_authorization": False,
+              "files": files,
+          }
+          (root / "CI_EXECUTION_SUMMARY.json").write_text(
+              json.dumps(summary, indent=2), encoding="utf-8"
+          )
+          print(json.dumps(summary, indent=2))
+          PY
+
+      - name: Build compact A5 handoff bundle
+        if: always()
+        run: |
+          cd a5_workspace
+          zip -r -9 ../A5_HANDOFF_BUNDLE_V2.zip \
+            derived \
+            logs \
+            CI_EXECUTION_SUMMARY.json
+          cd ..
+          sha256sum A5_HANDOFF_BUNDLE_V2.zip | tee A5_HANDOFF_BUNDLE_V2.zip.sha256
+
+      - name: Upload handoff evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: A5_HANDOFF_BUNDLE_V2
+          path: |
+            A5_HANDOFF_BUNDLE_V2.zip
+            A5_HANDOFF_BUNDLE_V2.zip.sha256
+          if-no-files-found: error
+          retention-days: 14
+          compression-level: 0
+
+      - name: Enforce A5 authorization gate
+        if: always()
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          gate_path = Path("a5_workspace/derived/A5_GATE_RESULT_V2.json")
+          if not gate_path.is_file():
+              raise SystemExit("A5 FAIL: gate result was not produced.")
+
+          gate = json.loads(gate_path.read_text(encoding="utf-8"))
+          if gate.get("a5_pass") is not True:
+              raise SystemExit("A5 FAIL: one or more acquisition gates are false.")
+          if gate.get("adim_01e_0o_b_authorization") is not True:
+              raise SystemExit("A5 FAIL: 0O-B authorization is false.")
+          if gate.get("baseline_implementation_authorization") is not False:
+              raise SystemExit("A5 FAIL: implementation authorization must remain false.")
+          print("A5 PASS: handoff artifact is eligible for independent 0O-B pre-audit.")
+          PY
